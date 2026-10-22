@@ -1,0 +1,1256 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Ambar Barkod & Koli Toplama Sistemi</title>
+<meta name="theme-color" content="#0f172a">
+<style>
+:root{
+  --bg:#0f172a; --bg2:#1e293b; --bg3:#334155; --border:#334155;
+  --text:#e2e8f0; --muted:#94a3b8; --accent:#3b82f6; --green:#22c55e;
+  --amber:#f59e0b; --red:#ef4444; --purple:#a855f7;
+}
+*{box-sizing:border-box;}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,"Segoe UI",Roboto,Arial,sans-serif;}
+header{display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--bg2);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50;}
+header h1{font-size:15px;margin:0;flex:1;font-weight:700;}
+.version-badge{font-size:10px;background:var(--bg3);color:var(--muted);padding:2px 6px;border-radius:10px;}
+.icon-btn{background:var(--bg3);border:none;color:var(--text);font-size:18px;width:38px;height:38px;border-radius:8px;cursor:pointer;}
+.icon-btn:active{transform:scale(0.92);}
+.tab-bar{display:flex;background:var(--bg2);border-bottom:1px solid var(--border);}
+.tab-btn{flex:1;padding:12px 4px;text-align:center;background:none;border:none;color:var(--muted);font-size:13px;font-weight:600;border-bottom:3px solid transparent;}
+.tab-btn.active{color:var(--text);border-bottom-color:var(--accent);}
+.tab-content{display:none;padding:10px;padding-bottom:90px;}
+.tab-content.active{display:block;}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:10px;}
+.btn{border:none;border-radius:10px;padding:10px 14px;font-size:14px;font-weight:600;cursor:pointer;}
+.btn-primary{background:var(--accent);color:#fff;}
+.btn-secondary{background:var(--bg3);color:var(--text);}
+.btn-danger{background:var(--red);color:#fff;}
+.btn-success{background:var(--green);color:#052e12;}
+.btn-block{width:100%;}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.row.between{justify-content:space-between;}
+input[type=text],input[type=number],select{background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:9px 10px;border-radius:8px;font-size:14px;}
+input[type=range]{width:100%;}
+.badge-new{background:var(--purple);color:#fff;font-size:9px;padding:2px 6px;border-radius:8px;margin-left:6px;vertical-align:middle;}
+#cameraWrap{position:relative;background:#000;border-radius:12px;overflow:hidden;aspect-ratio:4/3;}
+#cameraVideo{width:100%;height:100%;object-fit:cover;display:block;}
+#fallbackReaderDiv{width:100%;}
+.overlay-top{position:absolute;top:8px;left:8px;right:8px;display:flex;justify-content:space-between;gap:6px;pointer-events:none;}
+.pill{background:rgba(0,0,0,0.6);color:#fff;font-size:11px;padding:4px 8px;border-radius:20px;}
+.banner{position:absolute;left:8px;right:8px;bottom:8px;padding:10px;border-radius:10px;font-size:13px;font-weight:700;text-align:center;display:none;}
+.banner.amber{background:rgba(245,158,11,0.92);color:#1a1200;}
+.banner.green{background:rgba(34,197,94,0.92);color:#042f0d;}
+.banner.red{background:rgba(239,68,68,0.92);color:#2a0404;}
+.cam-controls{display:flex;gap:8px;padding:8px 0;flex-wrap:wrap;}
+.scan-row{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;}
+.ref-row{display:flex;justify-content:space-between;align-items:center;padding:9px 6px;border-bottom:1px solid var(--border);gap:6px;}
+.ref-row:last-child{border-bottom:none;}
+.ref-main{font-weight:700;font-size:13px;}
+.ref-sub{font-size:11px;color:var(--muted);}
+.ref-total{font-weight:700;color:var(--green);font-size:14px;}
+.template-cols{display:flex;gap:10px;}
+.template-col{flex:1;background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden;}
+.template-col h3{margin:0;padding:8px;font-size:12px;background:var(--bg3);text-align:center;}
+.template-row{padding:7px 8px;font-size:11.5px;border-bottom:1px solid var(--border);cursor:pointer;display:flex;justify-content:space-between;}
+.template-row:active{background:var(--bg3);}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);display:none;align-items:flex-end;justify-content:center;z-index:200;}
+.modal-overlay.show{display:flex;}
+.modal{background:var(--bg2);width:100%;max-width:520px;max-height:85vh;overflow-y:auto;border-radius:16px 16px 0 0;padding:16px;}
+.modal h2{margin-top:0;font-size:16px;}
+.chip-list{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0;}
+.chip{background:var(--bg3);border-radius:20px;padding:6px 10px;display:flex;align-items:center;gap:8px;font-size:12px;}
+.chip-del{background:var(--red);color:#fff;border:none;border-radius:50%;width:20px;height:20px;cursor:pointer;font-size:11px;}
+.settings-section{border-top:1px solid var(--border);padding-top:12px;margin-top:12px;}
+.settings-section h3{font-size:13px;margin:0 0 10px;}
+.switch-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;font-size:13px;}
+.field-row{margin-bottom:12px;}
+.field-row label{display:block;font-size:12px;color:var(--muted);margin-bottom:4px;}
+.radio-group{display:flex;gap:14px;font-size:13px;}
+.note-warning{font-size:12px;color:var(--amber);}
+#toastContainer{position:fixed;top:60px;right:10px;z-index:300;display:flex;flex-direction:column;gap:6px;}
+.toast{background:var(--bg3);border-left:4px solid var(--accent);padding:10px 12px;border-radius:8px;font-size:12.5px;box-shadow:0 4px 10px rgba(0,0,0,0.4);opacity:1;transition:opacity 0.3s;max-width:260px;}
+.toast-error{border-left-color:var(--red);}
+.toast-warn{border-left-color:var(--amber);}
+.toast-success{border-left-color:var(--green);}
+.toast-out{opacity:0;}
+.search-box{margin-bottom:10px;}
+.empty-state{text-align:center;color:var(--muted);padding:30px 10px;font-size:13px;}
+.footer-nav{position:fixed;bottom:0;left:0;right:0;background:var(--bg2);border-top:1px solid var(--border);display:flex;padding:8px;gap:8px;z-index:40;}
+details summary{cursor:pointer;font-size:13px;color:var(--accent);margin-bottom:8px;}
+.small-muted{font-size:11px;color:var(--muted);}
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>📦 Ambar Barkod & Koli Toplama <span class="version-badge">v2.4.1 TTS+DATA</span></h1>
+  <button id="btnTtsToggle" class="icon-btn" title="Sesli bildirimi aç/kapat">🔊</button>
+  <button id="btnUndo" class="icon-btn" title="Son taramayı geri al">↩️</button>
+  <button id="btnSettings" class="icon-btn" title="Ayarlar">⚙️</button>
+</header>
+
+<div class="tab-bar">
+  <button class="tab-btn active" data-tab="1">📋 Okutulanlar Listesi</button>
+  <button class="tab-btn" data-tab="2">📑 2 Sütunlu Tam Şablon</button>
+</div>
+
+<!-- TAB 1 -->
+<div class="tab-content active" id="tab1">
+
+  <div class="card">
+    <div id="cameraWrap">
+      <video id="cameraVideo" playsinline muted></video>
+      <div id="fallbackReaderDiv"></div>
+      <div class="overlay-top">
+        <span class="pill" id="engineLabel">KAMERA KAPALI</span>
+        <span class="pill" id="detectCountPill" style="display:none;">🔍 0 barkod</span>
+      </div>
+      <div class="banner amber" id="pendingBanner"></div>
+      <div class="banner green" id="successBanner"></div>
+    </div>
+    <div class="cam-controls">
+      <button id="btnStartCam" class="btn btn-primary">▶️ Kamerayı Başlat</button>
+      <button id="btnStopCam" class="btn btn-secondary" style="display:none;">⏹️ Durdur</button>
+      <button id="btnTorch" class="icon-btn" style="display:none;">🔦</button>
+      <input type="range" id="zoomSlider" min="1" max="4" step="0.1" value="1" style="display:none;width:120px;">
+      <button id="btnGallery" class="btn btn-secondary">🖼️ Galeriden Toplu Tara <span class="badge-new">YENİ</span></button>
+      <input type="file" id="galleryInput" accept="image/*" multiple style="display:none;">
+    </div>
+    <input type="text" id="scannerBufferInput" placeholder="🔌 El terminali (HID) buraya odaklanıp okutun, Enter ile onaylanır" style="width:100%;margin-top:6px;">
+  </div>
+
+  <div class="card">
+    <h3 style="margin-top:0;font-size:13px;">✍️ Manuel Giriş</h3>
+    <form id="manualAddForm" class="scan-row">
+      <input type="text" id="quickLookupInput" placeholder="3 hane (örn. 288)" maxlength="3" style="width:110px;">
+      <input type="text" id="manualRefInput" placeholder="Referans (7616288-G630)" style="flex:1;min-width:160px;">
+      <input type="number" id="manualQtyInput" placeholder="Miktar" style="width:90px;">
+      <button type="submit" class="btn btn-primary">➕ Ekle</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <input type="text" id="searchScanned" class="search-box" placeholder="🔎 Referansta ara..." style="width:100%;">
+    <div id="scannedListWrap"></div>
+  </div>
+
+  <div class="row" style="gap:8px;">
+    <button id="btnExportScanned" class="btn btn-success btn-block">⬇️ Sadece Okutulanlar İndir (CSV)</button>
+  </div>
+</div>
+
+<!-- TAB 2 -->
+<div class="tab-content" id="tab2">
+  <div class="card">
+    <input type="text" id="searchTemplate" class="search-box" placeholder="🔎 Şablonda ara..." style="width:100%;">
+    <div class="template-cols">
+      <div class="template-col">
+        <h3>SOL LİSTE (<span id="solCountLabel">46</span>)</h3>
+        <div id="solListWrap"></div>
+      </div>
+      <div class="template-col">
+        <h3>SAĞ LİSTE (<span id="sagCountLabel">47</span>)</h3>
+        <div id="sagListWrap"></div>
+      </div>
+    </div>
+  </div>
+  <button id="btnExportTemplate" class="btn btn-success btn-block">⬇️ Şablon İndir - 2 Sütun (CSV)</button>
+</div>
+
+<div class="footer-nav">
+  <button id="btnOpenBoxModalFromFooter" class="btn btn-secondary" style="display:none;"></button>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div class="modal-overlay" id="settingsOverlay">
+  <div class="modal">
+    <h2>⚙️ Ayarlar</h2>
+
+    <div class="settings-section" style="border-top:none;padding-top:0;">
+      <h3>🔊 Sesli Geri Bildirim (TTS)</h3>
+      <label class="switch-row"><span>Sesli bildirimleri etkinleştir</span><input type="checkbox" id="settingTtsEnabled"></label>
+      <label class="switch-row"><span>Ara durum bildirimleri de seslendirilsin (kilitlendi uyarıları)</span><input type="checkbox" id="settingTtsStatusEvents"></label>
+      <div class="field-row">
+        <label>Ses (Voice)</label>
+        <select id="settingTtsVoice" style="width:100%;"></select>
+      </div>
+      <div class="field-row">
+        <label>Konuşma Hızı: <span id="ttsRateVal">1.0</span>x</label>
+        <input type="range" id="settingTtsRate" min="0.5" max="2" step="0.1" value="1">
+      </div>
+      <div class="field-row">
+        <label>Ses Düzeyi: <span id="ttsVolVal">100</span>%</label>
+        <input type="range" id="settingTtsVolume" min="0" max="1" step="0.05" value="1">
+      </div>
+      <div class="field-row">
+        <label>Detay Seviyesi</label>
+        <div class="radio-group">
+          <label><input type="radio" name="ttsVerbosity" value="kisa"> Kısa</label>
+          <label><input type="radio" name="ttsVerbosity" value="detayli"> Detaylı</label>
+        </div>
+      </div>
+      <button id="btnTtsTest" class="btn btn-secondary">🔊 Test Et</button>
+      <p id="ttsUnsupportedNote" class="note-warning" style="display:none;">⚠️ Bu cihaz/tarayıcı sesli geri bildirimi (Web Speech API) desteklemiyor.</p>
+    </div>
+
+    <div class="settings-section">
+      <h3>⏱️ Genel Zamanlama</h3>
+      <div class="detail-grid">
+        <div class="field-row"><label>Maks. Miktar</label><input type="number" id="settingMaxQty" style="width:100%;"></div>
+        <div class="field-row"><label>Cooldown (ms)</label><input type="number" id="settingCooldown" style="width:100%;"></div>
+        <div class="field-row"><label>Ref Timeout (ms)</label><input type="number" id="settingRefTimeout" style="width:100%;"></div>
+        <div class="field-row"><label>Qty Timeout (ms)</label><input type="number" id="settingQtyTimeout" style="width:100%;"></div>
+      </div>
+    </div>
+
+    <details class="settings-section">
+      <summary>🔧 Gelişmiş: Kalabalık Etiket Eşleştirme Ayarları</summary>
+      <div class="detail-grid">
+        <div class="field-row"><label>Canlı Kamera Maks. Mesafe</label><input type="number" step="0.05" id="settingLiveMaxDist" style="width:100%;"></div>
+        <div class="field-row"><label>Galeri/Toplu Maks. Mesafe</label><input type="number" step="0.05" id="settingBatchMaxDist" style="width:100%;"></div>
+        <div class="field-row"><label>Tekrar Önleme Yarıçapı</label><input type="number" step="0.01" id="settingDedupRadius" style="width:100%;"></div>
+        <div class="field-row"><label>Tekrar Önleme Süresi (ms)</label><input type="number" id="settingDedupTTL" style="width:100%;"></div>
+      </div>
+    </details>
+
+    <button id="btnCloseSettings" class="btn btn-primary btn-block" style="margin-top:10px;">Kapat</button>
+  </div>
+</div>
+
+<!-- BOX DETAIL MODAL -->
+<div class="modal-overlay" id="boxModalOverlay">
+  <div class="modal">
+    <h2 id="boxModalTitle">Kutu Detayları</h2>
+    <div class="chip-list" id="boxModalList"></div>
+    <button id="btnDeleteWholeRef" class="btn btn-danger btn-block">🗑️ Tüm Referansı Sil</button>
+    <button id="btnCloseBoxModal" class="btn btn-secondary btn-block" style="margin-top:8px;">Kapat</button>
+  </div>
+</div>
+
+<!-- AMBIGUOUS MATCH MODAL -->
+<div class="modal-overlay" id="ambiguousOverlay">
+  <div class="modal">
+    <h2>Birden Fazla Eşleşme Bulundu</h2>
+    <div id="ambiguousList"></div>
+    <button id="btnCloseAmbiguous" class="btn btn-secondary btn-block" style="margin-top:8px;">İptal</button>
+  </div>
+</div>
+
+<!-- BATCH RESULT MODAL -->
+<div class="modal-overlay" id="batchResultOverlay">
+  <div class="modal">
+    <h2>📸 Toplu Tarama Sonucu</h2>
+    <p id="batchSummaryText" class="small-muted"></p>
+    <div class="chip-list" id="batchAddedList"></div>
+    <div id="batchLeftoverSection" style="display:none;">
+      <h3 style="font-size:13px;">⚠️ Eşleşmeyen Barkodlar — Elle Tamamlayın</h3>
+      <div id="batchLeftoverList"></div>
+    </div>
+    <button id="btnCloseBatchResult" class="btn btn-primary btn-block" style="margin-top:10px;">Tamam</button>
+  </div>
+</div>
+
+<div id="toastContainer"></div>
+
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script>
+/* =========================================================
+   MASTER REFERENCE DATA — KULLANICI TARAFINDAN SAĞLANAN
+   GERÇEK TABLO VERİSİ (görselden birebir transkript edildi)
+   ========================================================= */
+const SOL_LISTE = [
+"7616228-G345","7616229-G345","7616230-G345","7616231-G345","7616232-G345",
+"7616233-G345","7616234-G345","7616235-G345","7616236-G345","7616237-G345",
+"7616238-G345","7616239-G345","7616240-G345",
+"7616241-G631","7616242-G631","7616243-G631","7616244-G631","7616245-G631",
+"7616246-G631","7616247-G631","7616248-G631","7616249-G631","7616250-G631",
+"7616251-G631","7616252-G631","7616253-G631","7616254-G631",
+"7616255-G485","7616256-G485","7616257-G485","7616258-G485",
+"7616255-G485","7616256-G485","7616257-G485","7616258-G485",
+"7616259-G485","7616260-G485","7616261-G485","7616262-G485","7616263-G485",
+"7616309-G544","7616310-G544","7616311-G544","7616312-G544","7616313-G544","7616314-G544"
+];
+
+const SAG_LISTE = [
+"7616264-G485","7616265-G485","7616266-G485","7616267-G485","7616268-G485",
+"7616269-G548","7616270-G548","7616271-G548","7616272-G548","7616273-G548",
+"7616274-G548","7616275-G548","7616276-G548","7616277-G548","7616278-G548",
+"7616279-G630","7616280-G630","7616281-G630","7616282-G630","7616284-G630",
+"7616285-G630","7616286-G630","7616287-G630","7616288-G630","7616289-G630",
+"7616290-G630","7616291-G630","7616292-G630","7616293-G630",
+"7616294-G628","7616295-G628","7616296-G628","7616297-G628","7616298-G628",
+"7616299-G628","7616300-G628","7616301-G628","7616302-G628","7616303-G628",
+"7616304-G628","7616305-G628","7616306-G628","7616307-G628",
+"7616308-G544","7616315-G544","7616316-G544","7616317-G544"
+];
+
+// Self-check — konsolda uyarı verir, uygulamayı durdurmaz
+if(SOL_LISTE.length!==46) console.warn("SOL_LISTE uzunluk uyuşmazlığı: beklenen 46, bulunan",SOL_LISTE.length);
+if(SAG_LISTE.length!==47) console.warn("SAG_LISTE uzunluk uyuşmazlığı: beklenen 47, bulunan",SAG_LISTE.length);
+
+/* =========================================================
+   BLACKLIST
+   ========================================================= */
+const BLACKLIST_EXACT = new Set([
+  "CUSTOMER","DINIZ","ADIENT","COLORCODE","VENDOR","RECEIVER",
+  "PACKAGING UNIT NO","REFERENCE NO","QUANTITY","FIFO DATE","DATE","DESCRIPTION",
+  "CUSTOMER REFERENCE NO","K9 RB 2ND ROW 30% CT",
+  "322674","V322674","800001344","S800001344"
+]);
+const BLACKLIST_REGEX = [
+  /^\d{1,2}[\/.\-]\d{1,2}[\/.\-]\d{2,4}$/,
+  /^\d{1,2}:\d{2}(:\d{2})?$/,
+  /K9\s*RB/i,
+  /\d{1,3}\s*%\s*CT/i,
+  /^V\d{6}$/,
+  /^S\d{9}$/
+];
+
+/* =========================================================
+   STATE
+   ========================================================= */
+const STORAGE_KEYS = {
+  data:'ambar_scannedData', history:'ambar_actionHistory',
+  custom:'ambar_customRefs', settings:'ambar_settings'
+};
+const DEFAULT_SETTINGS = {
+  maxQty:1500, refTimeout:12000, qtyTimeout:6000, cooldown:2000,
+  liveMaxDist:0.4, batchMaxDist:0.6, dedupRadius:0.12, dedupTTL:4500,
+  ttsEnabled:true, ttsStatusEvents:false, ttsLang:'tr-TR',
+  ttsRate:1.0, ttsVolume:1.0, ttsVoiceURI:'', ttsVerbosity:'kisa'
+};
+let settings = {...DEFAULT_SETTINGS};
+let scannedData = {};
+let actionHistory = [];
+let customRefs = [];
+
+let pendingRef = null, pendingQty = null, lockUntil = 0;
+let committedBoxTracker = [];
+const COSMETIC_FLASH_MS = 1300;
+
+let mediaStream=null, currentTrack=null, nativeDetector=null, html5QrInstance=null;
+let torchOn=false;
+let pendingBannerTimer=null, successBannerTimer=null;
+let currentModalRef=null;
+let audioCtx=null;
+let ttsPrimed=false;
+
+/* =========================================================
+   PERSISTENCE
+   ========================================================= */
+function loadSettings(){
+  try{ const raw = localStorage.getItem(STORAGE_KEYS.settings);
+    settings = raw ? {...DEFAULT_SETTINGS, ...JSON.parse(raw)} : {...DEFAULT_SETTINGS};
+  }catch(e){ settings = {...DEFAULT_SETTINGS}; }
+}
+function saveSettings(){ localStorage.setItem(STORAGE_KEYS.settings, JSON.stringify(settings)); }
+function loadPersisted(){
+  try{ scannedData = JSON.parse(localStorage.getItem(STORAGE_KEYS.data)) || {}; }catch(e){ scannedData={}; }
+  try{ actionHistory = JSON.parse(localStorage.getItem(STORAGE_KEYS.history)) || []; }catch(e){ actionHistory=[]; }
+  try{ customRefs = JSON.parse(localStorage.getItem(STORAGE_KEYS.custom)) || []; }catch(e){ customRefs=[]; }
+}
+function persist(){
+  localStorage.setItem(STORAGE_KEYS.data, JSON.stringify(scannedData));
+  localStorage.setItem(STORAGE_KEYS.history, JSON.stringify(actionHistory));
+  localStorage.setItem(STORAGE_KEYS.custom, JSON.stringify(customRefs));
+}
+
+/* =========================================================
+   CLASSIFICATION
+   ========================================================= */
+function classifyBarcode(raw){
+  if(!raw) return null;
+  let s = String(raw).trim().toUpperCase();
+  if(!s) return null;
+  if(BLACKLIST_EXACT.has(s)) return null;
+  for(const re of BLACKLIST_REGEX){ if(re.test(s)) return null; }
+
+  if(s.startsWith('P')){
+    const body = s.slice(1);
+    if(/^\d{7}-[A-Z]\d{3}$/.test(body)) return {type:'ref', value:body};
+  }
+  if(/^\d{7}-[A-Z]\d{3}$/.test(s)) return {type:'ref', value:s};
+
+  if(s.startsWith('Q')){
+    const numPart = s.slice(1).replace(/[^\d]/g,'');
+    const n = parseInt(numPart,10);
+    if(!isNaN(n) && n>=1 && n<=settings.maxQty) return {type:'qty', value:n};
+    return null;
+  }
+  return null;
+}
+function isKnownRef(ref){ return SOL_LISTE.includes(ref) || SAG_LISTE.includes(ref); }
+function allKnownRefs(){ return [...new Set([...SOL_LISTE, ...SAG_LISTE, ...customRefs])]; }
+function resolveReference(query){
+  const q = query.trim().toUpperCase();
+  if(!q) return [];
+  return allKnownRefs().filter(r=>{
+    const numPart = r.split('-')[0];
+    return numPart.endsWith(q) || r.includes(q);
+  });
+}
+
+/* =========================================================
+   TTS ENGINE
+   ========================================================= */
+const ttsState = { queue:[], speaking:false, voices:[] };
+
+function loadVoices(){
+  if(!('speechSynthesis' in window)) return;
+  ttsState.voices = window.speechSynthesis.getVoices();
+  populateVoiceSelect();
+}
+if('speechSynthesis' in window){
+  window.speechSynthesis.onvoiceschanged = loadVoices;
+} else {
+  document.addEventListener('DOMContentLoaded', ()=>{
+    const note = document.getElementById('ttsUnsupportedNote');
+    if(note) note.style.display='block';
+    ['settingTtsEnabled','settingTtsStatusEvents','settingTtsVoice','settingTtsRate','settingTtsVolume','btnTtsTest']
+      .forEach(id=>{ const el=document.getElementById(id); if(el) el.disabled=true; });
+  });
+}
+function populateVoiceSelect(){
+  const sel = document.getElementById('settingTtsVoice');
+  if(!sel) return;
+  sel.innerHTML='';
+  const sorted = [...ttsState.voices].sort((a,b)=>{
+    const at = a.lang.toLowerCase().startsWith('tr')?0:1;
+    const bt = b.lang.toLowerCase().startsWith('tr')?0:1;
+    return at-bt;
+  });
+  const autoOpt = document.createElement('option');
+  autoOpt.value=''; autoOpt.textContent='Otomatik (Türkçe varsa öncelikli)';
+  sel.appendChild(autoOpt);
+  sorted.forEach(v=>{
+    const opt = document.createElement('option');
+    opt.value = v.voiceURI;
+    opt.textContent = `${v.name} (${v.lang})`;
+    if(settings.ttsVoiceURI === v.voiceURI) opt.selected=true;
+    sel.appendChild(opt);
+  });
+}
+function pickVoice(){
+  if(!ttsState.voices.length) return null;
+  if(settings.ttsVoiceURI){
+    const v = ttsState.voices.find(v=>v.voiceURI===settings.ttsVoiceURI);
+    if(v) return v;
+  }
+  const tr = ttsState.voices.find(v=>v.lang && v.lang.toLowerCase().startsWith('tr'));
+  return tr || ttsState.voices[0];
+}
+function speak(text, opts={}){
+  if(!settings.ttsEnabled) return;
+  if(!('speechSynthesis' in window)) return;
+  if(!text) return;
+  if(opts.interrupt){
+    window.speechSynthesis.cancel();
+    ttsState.queue = [];
+    ttsState.speaking = false;
+  }
+  if(ttsState.queue.length >= 5) ttsState.queue.shift();
+  ttsState.queue.push(text);
+  processTtsQueue();
+}
+function processTtsQueue(){
+  if(ttsState.speaking) return;
+  const next = ttsState.queue.shift();
+  if(next===undefined) return;
+  const utter = new SpeechSynthesisUtterance(next);
+  const voice = pickVoice();
+  if(voice) utter.voice = voice;
+  utter.lang = settings.ttsLang || 'tr-TR';
+  utter.rate = settings.ttsRate || 1.0;
+  utter.volume = settings.ttsVolume!==undefined ? settings.ttsVolume : 1.0;
+  utter.pitch = 1.0;
+  ttsState.speaking = true;
+  utter.onend = ()=>{ ttsState.speaking=false; processTtsQueue(); };
+  utter.onerror = ()=>{ ttsState.speaking=false; processTtsQueue(); };
+  window.speechSynthesis.speak(utter);
+}
+function formatRefForSpeech(ref){ return ref.replace('-', ' '); }
+function speakEvent(kind, data){
+  if(!settings.ttsEnabled) return;
+  switch(kind){
+    case 'commit':
+      if(settings.ttsVerbosity==='detayli'){
+        speak(`Referans ${formatRefForSpeech(data.ref)}, ${data.qty} adet kaydedildi.`);
+      } else {
+        speak(`${formatRefForSpeech(data.ref)}, ${data.qty} adet.`);
+      }
+      break;
+    case 'batchCommit':
+      if(data.count<=3 && settings.ttsVerbosity==='detayli' && data.pairs){
+        data.pairs.forEach(p=>speak(`${formatRefForSpeech(p.ref.value)}, ${p.qty.value} adet.`));
+      } else {
+        speak(`${data.count} kutu birden kaydedildi.`);
+      }
+      break;
+    case 'refLocked':
+      if(settings.ttsStatusEvents) speak('Referans kilitlendi, miktar bekleniyor.');
+      break;
+    case 'qtyLocked':
+      if(settings.ttsStatusEvents) speak('Miktar kilitlendi, referans bekleniyor.');
+      break;
+    case 'duplicate':
+      speak('Tekrar okutuldu, yok sayıldı.');
+      break;
+    case 'undo':
+      speak('Son kayıt geri alındı.');
+      break;
+    case 'delete':
+      speak('Kutu silindi.');
+      break;
+    case 'exported':
+      speak('Dosya indiriliyor.');
+      break;
+    case 'error':
+      speak(data && data.msg ? data.msg : 'Hata oluştu.');
+      break;
+  }
+}
+function primeTts(){
+  if(ttsPrimed) return;
+  ttsPrimed = true;
+  if('speechSynthesis' in window){
+    try{
+      const u = new SpeechSynthesisUtterance('');
+      u.volume = 0;
+      window.speechSynthesis.speak(u);
+    }catch(e){}
+  }
+}
+document.addEventListener('click', primeTts, {once:true});
+
+/* =========================================================
+   AUDIO BEEP + VIBRATE
+   ========================================================= */
+function beep(type){
+  try{
+    if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.frequency.value = type==='high' ? 1500 : 600;
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+    osc.start();
+    osc.stop(audioCtx.currentTime+0.12);
+  }catch(e){}
+}
+
+/* =========================================================
+   CORE DATA OPS
+   ========================================================= */
+function addBox(ref, qty){
+  if(!scannedData[ref]) scannedData[ref] = {boxes:[]};
+  scannedData[ref].boxes.push(qty);
+  if(!isKnownRef(ref) && !customRefs.includes(ref)) customRefs.push(ref);
+  actionHistory.push({type:'add', ref, qty});
+  persist();
+}
+function doCommit(ref, qty){
+  addBox(ref, qty);
+  renderAll();
+}
+function commitScan(ref, qty){
+  const now = Date.now();
+  if(now < lockUntil){
+    flashCooldown();
+    speakEvent('duplicate');
+    return;
+  }
+  addBox(ref, qty);
+  lockUntil = now + settings.cooldown;
+  beep('high');
+  if(navigator.vibrate) navigator.vibrate(160);
+  flashSuccess(ref, qty);
+  speakEvent('commit', {ref, qty});
+  renderAll();
+}
+
+/* ---- Sequential pairing (handheld / manual) ---- */
+function handleClassified(c){
+  const now = Date.now();
+  if(c.type==='ref'){
+    if(pendingQty && (now - pendingQty.time) <= settings.qtyTimeout){
+      commitScan(c.value, pendingQty.value);
+      pendingQty=null; pendingRef=null;
+    } else {
+      const isNew = !pendingRef || pendingRef.value !== c.value;
+      pendingRef = {value:c.value, time:now};
+      pendingQty = null;
+      if(isNew){ showPendingBanner('ref'); beep('low'); }
+    }
+  } else if(c.type==='qty'){
+    if(pendingRef && (now - pendingRef.time) <= settings.refTimeout){
+      commitScan(pendingRef.value, c.value);
+      pendingRef=null; pendingQty=null;
+    } else {
+      const isNew = !pendingQty || pendingQty.value !== c.value;
+      pendingQty = {value:c.value, time:now};
+      pendingRef = null;
+      if(isNew){ showPendingBanner('qty'); beep('low'); }
+    }
+  }
+}
+function processDetectedCodes(codes){
+  codes.forEach(raw=>{
+    const c = classifyBarcode(raw);
+    if(c) handleClassified(c);
+  });
+}
+
+/* ---- Spatial pairing (camera live / gallery batch) ---- */
+function spatialPair(refs, qtys, maxDist){
+  const pairs=[]; const usedQty=new Set();
+  refs.forEach(r=>{
+    let best=null, bestDist=Infinity;
+    qtys.forEach((q,qi)=>{
+      if(usedQty.has(qi)) return;
+      const dist = Math.hypot(r.x-q.x, r.y-q.y);
+      if(dist<bestDist){ bestDist=dist; best=qi; }
+    });
+    if(best!==null && bestDist<=maxDist){ pairs.push({ref:r, qty:qtys[best]}); usedQty.add(best); }
+  });
+  const leftoverRefs = refs.filter(r=>!pairs.some(p=>p.ref===r));
+  const leftoverQtys = qtys.filter((q,qi)=>!usedQty.has(qi));
+  return {pairs, leftoverRefs, leftoverQtys};
+}
+function isDuplicateBox(ref, qty, x, y){
+  const now = Date.now();
+  committedBoxTracker = committedBoxTracker.filter(b=>b.expires>now);
+  const match = committedBoxTracker.find(b=> b.ref===ref && b.qty===qty && Math.hypot(b.x-x,b.y-y) <= settings.dedupRadius);
+  if(match){ match.expires = now + settings.dedupTTL; return true; }
+  return false;
+}
+function trackCommittedBox(ref, qty, x, y){
+  committedBoxTracker.push({ref, qty, x, y, expires: Date.now()+settings.dedupTTL});
+}
+function handleLiveLeftovers(leftoverRefs, leftoverQtys){
+  if(leftoverRefs.length>0) handleClassified({type:'ref', value:leftoverRefs[0].value});
+  if(leftoverQtys.length>0) handleClassified({type:'qty', value:leftoverQtys[0].value});
+}
+function handleDetections(rawDetections, frameW, frameH, isBatch){
+  const refs=[], qtys=[];
+  rawDetections.forEach(d=>{
+    const c = classifyBarcode(d.rawValue);
+    if(!c) return;
+    const bb = d.boundingBox || {x:0,y:0,width:frameW,height:frameH};
+    const cx = (bb.x + bb.width/2)/frameW;
+    const cy = (bb.y + bb.height/2)/frameH;
+    if(c.type==='ref') refs.push({value:c.value, x:cx, y:cy});
+    else qtys.push({value:c.value, x:cx, y:cy});
+  });
+  const maxDist = isBatch ? settings.batchMaxDist : settings.liveMaxDist;
+  const {pairs, leftoverRefs, leftoverQtys} = spatialPair(refs, qtys, maxDist);
+  let committedCount=0; const committedPairs=[];
+  pairs.forEach(p=>{
+    const mx=(p.ref.x+p.qty.x)/2, my=(p.ref.y+p.qty.y)/2;
+    if(isDuplicateBox(p.ref.value, p.qty.value, mx, my)) return;
+    doCommit(p.ref.value, p.qty.value);
+    trackCommittedBox(p.ref.value, p.qty.value, mx, my);
+    committedCount++;
+    committedPairs.push(p);
+  });
+  if(committedCount>0){
+    beep('high');
+    if(navigator.vibrate) navigator.vibrate(160);
+    flashSuccess(null, null, committedCount);
+    speakEvent('batchCommit', {count:committedCount, pairs:committedPairs});
+  }
+  if(!isBatch){
+    handleLiveLeftovers(leftoverRefs, leftoverQtys);
+  }
+  return {committedCount, committedPairs, leftoverRefs, leftoverQtys};
+}
+
+/* =========================================================
+   UI BANNERS / TOASTS
+   ========================================================= */
+function showPendingBanner(kind){
+  const el = document.getElementById('pendingBanner');
+  el.style.display='block';
+  el.className='banner amber';
+  el.textContent = kind==='ref' ? '🔒 REFERANS KİLİTLENDİ → MİKTAR BEKLENİYOR' : '🔒 MİKTAR KİLİTLENDİ → REFERANS BEKLENİYOR';
+  speakEvent(kind==='ref'?'refLocked':'qtyLocked');
+  clearTimeout(pendingBannerTimer);
+  const t = kind==='ref' ? settings.refTimeout : settings.qtyTimeout;
+  pendingBannerTimer = setTimeout(()=>{ el.style.display='none'; }, t);
+}
+function flashSuccess(ref, qty, count){
+  const el = document.getElementById('successBanner');
+  el.style.display='block';
+  el.className='banner green';
+  el.textContent = count ? `✅ ${count} KUTU BİRDEN KAYDEDİLDİ!` : `✅ KAYDEDİLDİ: ${ref} — ${qty} adet`;
+  clearTimeout(successBannerTimer);
+  successBannerTimer = setTimeout(()=>{ el.style.display='none'; }, COSMETIC_FLASH_MS);
+}
+function flashCooldown(){
+  const el = document.getElementById('successBanner');
+  el.style.display='block';
+  el.className='banner red';
+  el.textContent='⏳ Çok hızlı — tekrar okuma engellendi';
+  setTimeout(()=>{ el.style.display='none'; }, 1000);
+}
+function showToast(msg, type='info'){
+  const c = document.getElementById('toastContainer');
+  const t = document.createElement('div');
+  t.className = 'toast toast-'+type;
+  t.textContent = msg;
+  c.appendChild(t);
+  setTimeout(()=>{ t.classList.add('toast-out'); setTimeout(()=>t.remove(),300); }, 2500);
+}
+
+/* =========================================================
+   RENDERING
+   ========================================================= */
+function switchToTab(n){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active', b.dataset.tab==String(n)));
+  document.getElementById('tab1').classList.toggle('active', n===1);
+  document.getElementById('tab2').classList.toggle('active', n===2);
+}
+function renderAll(){
+  renderScannedList();
+  renderTemplateCols();
+}
+function renderScannedList(){
+  const wrap = document.getElementById('scannedListWrap');
+  const filter = (document.getElementById('searchScanned').value||'').toUpperCase();
+  const refs = Object.keys(scannedData).filter(r=>r.includes(filter));
+  if(refs.length===0){
+    wrap.innerHTML = '<div class="empty-state">Henüz okutulan kayıt yok.</div>';
+    return;
+  }
+  wrap.innerHTML='';
+  refs.forEach(ref=>{
+    const boxes = scannedData[ref].boxes;
+    const sum = boxes.reduce((a,b)=>a+b,0);
+    const formula = '=' + boxes.join('+');
+    const row = document.createElement('div');
+    row.className='ref-row';
+    row.innerHTML = `
+      <div style="flex:1;cursor:pointer;" data-ref="${ref}" class="openBoxModalTrigger">
+        <div class="ref-main">${ref}</div>
+        <div class="ref-sub">${formula} &nbsp;|&nbsp; ${boxes.length} kutu</div>
+      </div>
+      <div class="ref-total">${sum}</div>`;
+    wrap.appendChild(row);
+  });
+  wrap.querySelectorAll('.openBoxModalTrigger').forEach(el=>{
+    el.addEventListener('click', ()=>openBoxModal(el.dataset.ref));
+  });
+}
+function renderTemplateCols(){
+  const filter = (document.getElementById('searchTemplate').value||'').toUpperCase();
+  renderTemplateCol('solListWrap', SOL_LISTE, filter);
+  renderTemplateCol('sagListWrap', SAG_LISTE, filter);
+}
+function renderTemplateCol(wrapId, list, filter){
+  const wrap = document.getElementById(wrapId);
+  wrap.innerHTML='';
+  list.forEach(ref=>{
+    if(filter && !ref.includes(filter)) return;
+    const entry = scannedData[ref];
+    const sum = entry ? entry.boxes.reduce((a,b)=>a+b,0) : '';
+    const row = document.createElement('div');
+    row.className='template-row';
+    row.innerHTML = `<span>${ref}</span><span style="color:var(--green);font-weight:700;">${sum}</span>`;
+    row.addEventListener('click', ()=>{
+      pendingRef = {value:ref, time:Date.now()};
+      pendingQty = null;
+      showPendingBanner('ref');
+      switchToTab(1);
+      showToast('Referans kilitlendi: '+ref,'success');
+    });
+    wrap.appendChild(row);
+  });
+}
+
+/* =========================================================
+   UNDO / DELETE
+   ========================================================= */
+function undoLastScan(){
+  const last = actionHistory.pop();
+  if(!last){ showToast('Geri alınacak işlem yok','warn'); return; }
+  if(last.type==='add'){
+    const entry = scannedData[last.ref];
+    if(entry){
+      entry.boxes.pop();
+      if(entry.boxes.length===0) delete scannedData[last.ref];
+    }
+  }
+  persist();
+  speakEvent('undo');
+  renderAll();
+  showToast('Son kayıt geri alındı','success');
+}
+function openBoxModal(ref){
+  currentModalRef = ref;
+  document.getElementById('boxModalTitle').textContent = 'Kutu Detayları — '+ref;
+  const list = document.getElementById('boxModalList');
+  list.innerHTML='';
+  const boxes = (scannedData[ref]?.boxes)||[];
+  if(boxes.length===0){
+    list.innerHTML = '<div class="empty-state">Kutu kalmadı.</div>';
+  } else {
+    boxes.forEach((qty, idx)=>{
+      const chip = document.createElement('div');
+      chip.className='chip';
+      chip.innerHTML = `<span>${qty} adet</span><button data-idx="${idx}" class="chip-del">✕</button>`;
+      list.appendChild(chip);
+    });
+  }
+  document.getElementById('boxModalOverlay').classList.add('show');
+}
+document.getElementById('boxModalList').addEventListener('click', e=>{
+  if(e.target.classList.contains('chip-del')){
+    const idx = parseInt(e.target.dataset.idx,10);
+    if(scannedData[currentModalRef]){
+      scannedData[currentModalRef].boxes.splice(idx,1);
+      if(scannedData[currentModalRef].boxes.length===0) delete scannedData[currentModalRef];
+    }
+    persist();
+    speakEvent('delete');
+    renderAll();
+    openBoxModal(currentModalRef);
+  }
+});
+document.getElementById('btnDeleteWholeRef').addEventListener('click', ()=>{
+  if(currentModalRef){
+    delete scannedData[currentModalRef];
+    persist();
+    renderAll();
+    document.getElementById('boxModalOverlay').classList.remove('show');
+    showToast('Referans silindi','success');
+  }
+});
+document.getElementById('btnCloseBoxModal').addEventListener('click', ()=>{
+  document.getElementById('boxModalOverlay').classList.remove('show');
+});
+
+/* =========================================================
+   AMBIGUOUS MODAL
+   ========================================================= */
+function openAmbiguousModal(matches, onChoose){
+  const list = document.getElementById('ambiguousList');
+  list.innerHTML='';
+  matches.forEach(m=>{
+    const row = document.createElement('div');
+    row.className='template-row';
+    row.textContent = m;
+    row.addEventListener('click', ()=>{
+      onChoose(m);
+      document.getElementById('ambiguousOverlay').classList.remove('show');
+    });
+    list.appendChild(row);
+  });
+  document.getElementById('ambiguousOverlay').classList.add('show');
+}
+document.getElementById('btnCloseAmbiguous').addEventListener('click', ()=>{
+  document.getElementById('ambiguousOverlay').classList.remove('show');
+});
+
+/* =========================================================
+   MANUAL ENTRY + QUICK LOOKUP
+   ========================================================= */
+document.getElementById('quickLookupInput').addEventListener('input', e=>{
+  const v = e.target.value.trim();
+  if(/^\d{3}$/.test(v)){
+    const matches = resolveReference(v);
+    if(matches.length===1){
+      document.getElementById('manualRefInput').value = matches[0];
+    } else if(matches.length>1){
+      openAmbiguousModal(matches, (chosen)=>{ document.getElementById('manualRefInput').value = chosen; });
+    }
+  }
+});
+document.getElementById('manualAddForm').addEventListener('submit', e=>{
+  e.preventDefault();
+  const refInput = document.getElementById('manualRefInput').value.trim().toUpperCase();
+  const qtyInput = parseInt(document.getElementById('manualQtyInput').value,10);
+  if(!refInput || isNaN(qtyInput)){ showToast('Referans ve miktar giriniz','error'); return; }
+  if(!/^\d{7}-[A-Z]\d{3}$/.test(refInput)){ showToast('Geçersiz referans formatı','error'); speakEvent('error',{msg:'Geçersiz referans formatı.'}); return; }
+  if(qtyInput<1 || qtyInput>settings.maxQty){ showToast('Geçersiz miktar','error'); speakEvent('error',{msg:'Geçersiz miktar.'}); return; }
+  commitScan(refInput, qtyInput);
+  e.target.reset();
+});
+document.getElementById('scannerBufferInput').addEventListener('keydown', e=>{
+  if(e.key==='Enter'){
+    const val = e.target.value;
+    e.target.value='';
+    processDetectedCodes([val]);
+  }
+});
+
+/* =========================================================
+   CAMERA ENGINE
+   ========================================================= */
+const videoEl = document.getElementById('cameraVideo');
+const engineLabelEl = document.getElementById('engineLabel');
+
+async function startCamera(){
+  try{
+    mediaStream = await navigator.mediaDevices.getUserMedia({
+      video:{facingMode:'environment', width:{ideal:1920}, height:{ideal:1080}}
+    });
+    videoEl.srcObject = mediaStream;
+    await videoEl.play();
+    document.getElementById('btnStartCam').style.display='none';
+    document.getElementById('btnStopCam').style.display='inline-block';
+    setupTrackControls();
+    if('BarcodeDetector' in window){
+      engineLabelEl.textContent = 'NATIVE • ÇOKLU ETİKET';
+      nativeDetector = new BarcodeDetector({formats:['code_128','code_39','ean_13','qr_code','code_93','codabar']});
+      requestAnimationFrame(nativeScanLoop);
+    } else {
+      engineLabelEl.textContent = 'FALLBACK (html5-qrcode)';
+      startFallbackScanner();
+    }
+  }catch(e){
+    showToast('Kamera başlatılamadı: '+e.message,'error');
+  }
+}
+async function nativeScanLoop(){
+  if(!mediaStream) return;
+  try{
+    const detections = await nativeDetector.detect(videoEl);
+    updateDetectionPill(detections.length);
+    if(detections.length>0){
+      handleDetections(detections.map(d=>({rawValue:d.rawValue, boundingBox:d.boundingBox})), videoEl.videoWidth||1, videoEl.videoHeight||1, false);
+    }
+  }catch(e){ /* per-frame errors ignored */ }
+  requestAnimationFrame(nativeScanLoop);
+}
+function startFallbackScanner(){
+  html5QrInstance = new Html5Qrcode('fallbackReaderDiv');
+  html5QrInstance.start({facingMode:'environment'}, {fps:20, qrbox:250},
+    (decodedText)=>{ handleDetections([{rawValue:decodedText, boundingBox:{x:0,y:0,width:1,height:1}}],1,1,false); },
+    ()=>{}
+  ).catch(e=>showToast('Fallback tarayıcı başlatılamadı','error'));
+}
+function stopCamera(){
+  if(mediaStream){ mediaStream.getTracks().forEach(t=>t.stop()); mediaStream=null; }
+  if(html5QrInstance){ html5QrInstance.stop().catch(()=>{}); html5QrInstance=null; }
+  document.getElementById('btnStartCam').style.display='inline-block';
+  document.getElementById('btnStopCam').style.display='none';
+  document.getElementById('btnTorch').style.display='none';
+  document.getElementById('zoomSlider').style.display='none';
+  engineLabelEl.textContent='KAMERA KAPALI';
+  updateDetectionPill(0);
+}
+function setupTrackControls(){
+  currentTrack = mediaStream.getVideoTracks()[0];
+  const caps = currentTrack.getCapabilities ? currentTrack.getCapabilities() : {};
+  const torchBtn = document.getElementById('btnTorch');
+  const zoomSlider = document.getElementById('zoomSlider');
+  if(caps.torch){ torchBtn.style.display='inline-block'; } else torchBtn.style.display='none';
+  if(caps.zoom){
+    zoomSlider.style.display='inline-block';
+    zoomSlider.min = caps.zoom.min; zoomSlider.max = caps.zoom.max; zoomSlider.step = caps.zoom.step||0.1;
+  } else zoomSlider.style.display='none';
+}
+function updateDetectionPill(n){
+  const el = document.getElementById('detectCountPill');
+  el.style.display = n>0 ? 'inline-block' : 'none';
+  el.textContent = `🔍 ${n} barkod`;
+}
+document.getElementById('btnTorch').addEventListener('click', ()=>{
+  if(!currentTrack) return;
+  torchOn = !torchOn;
+  currentTrack.applyConstraints({advanced:[{torch:torchOn}]}).catch(()=>{});
+});
+document.getElementById('zoomSlider').addEventListener('input', e=>{
+  if(!currentTrack) return;
+  currentTrack.applyConstraints({advanced:[{zoom:parseFloat(e.target.value)}]}).catch(()=>{});
+});
+document.getElementById('btnStartCam').addEventListener('click', startCamera);
+document.getElementById('btnStopCam').addEventListener('click', stopCamera);
+
+/* =========================================================
+   GALLERY BATCH SCAN
+   ========================================================= */
+document.getElementById('btnGallery').addEventListener('click', ()=>{
+  document.getElementById('galleryInput').click();
+});
+document.getElementById('galleryInput').addEventListener('change', async e=>{
+  const files = Array.from(e.target.files||[]);
+  if(files.length===0) return;
+  showToast('Görseller taranıyor...','info');
+  let totalCommitted=0;
+  const allCommittedPairs=[];
+  const allLeftoverRefs=[];
+  const allLeftoverQtys=[];
+  for(const file of files){
+    try{
+      const {detections, width, height} = await detectFromImageFile(file);
+      const result = handleDetections(detections, width, height, true);
+      totalCommitted += result.committedCount;
+      allCommittedPairs.push(...result.committedPairs);
+      allLeftoverRefs.push(...result.leftoverRefs);
+      allLeftoverQtys.push(...result.leftoverQtys);
+    }catch(err){
+      console.warn('Görsel işlenemedi', err);
+    }
+  }
+  e.target.value='';
+  showBatchResultModal(totalCommitted, allCommittedPairs, allLeftoverRefs, allLeftoverQtys);
+});
+async function detectFromImageFile(file){
+  const imgBitmap = await createImageBitmap(file);
+  if('BarcodeDetector' in window){
+    const detector = new BarcodeDetector({formats:['code_128','code_39','ean_13','qr_code','code_93','codabar']});
+    const detections = await detector.detect(imgBitmap);
+    return {
+      detections: detections.map(d=>({rawValue:d.rawValue, boundingBox:d.boundingBox})),
+      width: imgBitmap.width, height: imgBitmap.height
+    };
+  } else {
+    const tmpId = 'tmp-'+Date.now()+Math.random().toString(36).slice(2);
+    const tmpDiv = document.createElement('div');
+    tmpDiv.id = tmpId; tmpDiv.style.display='none';
+    document.body.appendChild(tmpDiv);
+    const instance = new Html5Qrcode(tmpId);
+    try{
+      const result = await instance.scanFile(file, false);
+      document.body.removeChild(tmpDiv);
+      return { detections:[{rawValue:result, boundingBox:{x:0,y:0,width:imgBitmap.width,height:imgBitmap.height}}], width:imgBitmap.width, height:imgBitmap.height };
+    }catch(err){
+      document.body.removeChild(tmpDiv);
+      return { detections:[], width:imgBitmap.width, height:imgBitmap.height };
+    }
+  }
+}
+function showBatchResultModal(count, pairs, leftoverRefs, leftoverQtys){
+  document.getElementById('batchSummaryText').textContent =
+    `${count} kutu otomatik eşleştirilip kaydedildi. ${leftoverRefs.length+leftoverQtys.length} barkod eşleşmedi.`;
+  const addedList = document.getElementById('batchAddedList');
+  addedList.innerHTML='';
+  pairs.forEach(p=>{
+    const chip = document.createElement('div');
+    chip.className='chip';
+    chip.textContent = `${p.ref.value} × ${p.qty.value}`;
+    addedList.appendChild(chip);
+  });
+  const leftoverSection = document.getElementById('batchLeftoverSection');
+  const leftoverList = document.getElementById('batchLeftoverList');
+  leftoverList.innerHTML='';
+  if(leftoverRefs.length===0 && leftoverQtys.length===0){
+    leftoverSection.style.display='none';
+  } else {
+    leftoverSection.style.display='block';
+    leftoverRefs.forEach((r,i)=>{
+      const row = document.createElement('div');
+      row.className='row';
+      row.style.marginBottom='8px';
+      row.innerHTML = `<span style="flex:1;">${r.value}</span>
+        <input type="number" placeholder="Miktar" style="width:90px;" class="leftoverQtyInput">
+        <button class="btn btn-primary leftoverRefAddBtn">Ekle</button>`;
+      const input = row.querySelector('.leftoverQtyInput');
+      row.querySelector('.leftoverRefAddBtn').addEventListener('click', ()=>{
+        const q = parseInt(input.value,10);
+        if(isNaN(q) || q<1 || q>settings.maxQty){ showToast('Geçersiz miktar','error'); return; }
+        doCommit(r.value, q);
+        speakEvent('commit',{ref:r.value, qty:q});
+        row.remove();
+        showToast('Eklendi: '+r.value,'success');
+      });
+      leftoverList.appendChild(row);
+    });
+    leftoverQtys.forEach((q,i)=>{
+      const row = document.createElement('div');
+      row.className='row';
+      row.style.marginBottom='8px';
+      row.innerHTML = `<span style="min-width:60px;">${q.value} adet</span>
+        <input type="text" placeholder="Referans (örn. 7616288-G630)" style="flex:1;" class="leftoverRefInput">
+        <button class="btn btn-primary leftoverQtyAddBtn">Ekle</button>`;
+      const input = row.querySelector('.leftoverRefInput');
+      row.querySelector('.leftoverQtyAddBtn').addEventListener('click', ()=>{
+        const refVal = input.value.trim().toUpperCase();
+        if(!/^\d{7}-[A-Z]\d{3}$/.test(refVal)){ showToast('Geçersiz referans','error'); return; }
+        doCommit(refVal, q.value);
+        speakEvent('commit',{ref:refVal, qty:q.value});
+        row.remove();
+        showToast('Eklendi: '+refVal,'success');
+      });
+      leftoverList.appendChild(row);
+    });
+  }
+  document.getElementById('batchResultOverlay').classList.add('show');
+}
+document.getElementById('btnCloseBatchResult').addEventListener('click', ()=>{
+  document.getElementById('batchResultOverlay').classList.remove('show');
+});
+
+/* =========================================================
+   CSV EXPORT
+   ========================================================= */
+function downloadCsv(filename, content){
+  const bom = '\uFEFF';
+  const blob = new Blob([bom+content], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href=url; a.download=filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  speakEvent('exported');
+}
+document.getElementById('btnExportTemplate').addEventListener('click', ()=>{
+  let rows = ['Sol Referans;Sol Formül;Sol Toplam;Sağ Referans;Sağ Formül;Sağ Toplam'];
+  const maxLen = Math.max(SOL_LISTE.length, SAG_LISTE.length);
+  for(let i=0;i<maxLen;i++){
+    const l = SOL_LISTE[i] || '';
+    const r = SAG_LISTE[i] || '';
+    const lEntry = l && scannedData[l] ? scannedData[l] : null;
+    const rEntry = r && scannedData[r] ? scannedData[r] : null;
+    const lFormula = lEntry ? '='+lEntry.boxes.join('+') : '';
+    const lTotal = lEntry ? lEntry.boxes.reduce((a,b)=>a+b,0) : '';
+    const rFormula = rEntry ? '='+rEntry.boxes.join('+') : '';
+    const rTotal = rEntry ? rEntry.boxes.reduce((a,b)=>a+b,0) : '';
+    rows.push(`${l};${lFormula};${lTotal};${r};${rFormula};${rTotal}`);
+  }
+  downloadCsv('sablon_2sutun.csv', rows.join('\r\n'));
+});
+document.getElementById('btnExportScanned').addEventListener('click', ()=>{
+  let rows = ['Referans;Koli Sayısı;Toplam Adet;Kutu Detayları Formül'];
+  Object.keys(scannedData).forEach(ref=>{
+    const boxes = scannedData[ref].boxes;
+    const total = boxes.reduce((a,b)=>a+b,0);
+    const formula = '='+boxes.join('+');
+    rows.push(`${ref};${boxes.length};${total};${formula}`);
+  });
+  downloadCsv('okutulanlar.csv', rows.join('\r\n'));
+});
+
+/* =========================================================
+   TABS
+   ========================================================= */
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>switchToTab(parseInt(btn.dataset.tab,10)));
+});
+document.getElementById('searchScanned').addEventListener('input', renderScannedList);
+document.getElementById('searchTemplate').addEventListener('input', renderTemplateCols);
+
+/* =========================================================
+   SETTINGS MODAL WIRING
+   ========================================================= */
+function applySettingsToUI(){
+  document.getElementById('settingTtsEnabled').checked = settings.ttsEnabled;
+  document.getElementById('settingTtsStatusEvents').checked = settings.ttsStatusEvents;
+  document.getElementById('settingTtsRate').value = settings.ttsRate;
+  document.getElementById('ttsRateVal').textContent = settings.ttsRate.toFixed(1);
+  document.getElementById('settingTtsVolume').value = settings.ttsVolume;
+  document.getElementById('ttsVolVal').textContent = Math.round(settings.ttsVolume*100);
+  document.querySelectorAll('input[name=ttsVerbosity]').forEach(r=>{ r.checked = (r.value===settings.ttsVerbosity); });
+  document.getElementById('settingMaxQty').value = settings.maxQty;
+  document.getElementById('settingCooldown').value = settings.cooldown;
+  document.getElementById('settingRefTimeout').value = settings.refTimeout;
+  document.getElementById('settingQtyTimeout').value = settings.qtyTimeout;
+  document.getElementById('settingLiveMaxDist').value = settings.liveMaxDist;
+  document.getElementById('settingBatchMaxDist').value = settings.batchMaxDist;
+  document.getElementById('settingDedupRadius').value = settings.dedupRadius;
+  document.getElementById('settingDedupTTL').value = settings.dedupTTL;
+  updateTtsToggleIcon();
+}
+function readSettingsFromUI(){
+  settings.ttsEnabled = document.getElementById('settingTtsEnabled').checked;
+  settings.ttsStatusEvents = document.getElementById('settingTtsStatusEvents').checked;
+  settings.ttsVoiceURI = document.getElementById('settingTtsVoice').value;
+  settings.ttsRate = parseFloat(document.getElementById('settingTtsRate').value);
+  settings.ttsVolume = parseFloat(document.getElementById('settingTtsVolume').value);
+  const verb = document.querySelector('input[name=ttsVerbosity]:checked');
+  settings.ttsVerbosity = verb ? verb.value : 'kisa';
+  settings.maxQty = parseInt(document.getElementById('settingMaxQty').value,10) || DEFAULT_SETTINGS.maxQty;
+  settings.cooldown = parseInt(document.getElementById('settingCooldown').value,10) || DEFAULT_SETTINGS.cooldown;
+  settings.refTimeout = parseInt(document.getElementById('settingRefTimeout').value,10) || DEFAULT_SETTINGS.refTimeout;
+  settings.qtyTimeout = parseInt(document.getElementById('settingQtyTimeout').value,10) || DEFAULT_SETTINGS.qtyTimeout;
+  settings.liveMaxDist = parseFloat(document.getElementById('settingLiveMaxDist').value) || DEFAULT_SETTINGS.liveMaxDist;
+  settings.batchMaxDist = parseFloat(document.getElementById('settingBatchMaxDist').value) || DEFAULT_SETTINGS.batchMaxDist;
+  settings.dedupRadius = parseFloat(document.getElementById('settingDedupRadius').value) || DEFAULT_SETTINGS.dedupRadius;
+  settings.dedupTTL = parseInt(document.getElementById('settingDedupTTL').value,10) || DEFAULT_SETTINGS.dedupTTL;
+  saveSettings();
+  updateTtsToggleIcon();
+}
+function updateTtsToggleIcon(){
+  document.getElementById('btnTtsToggle').textContent = settings.ttsEnabled ? '🔊' : '🔇';
+}
+document.getElementById('btnSettings').addEventListener('click', ()=>{
+  populateVoiceSelect();
+  document.getElementById('settingsOverlay').classList.add('show');
+});
+document.getElementById('btnCloseSettings').addEventListener('click', ()=>{
+  readSettingsFromUI();
+  document.getElementById('settingsOverlay').classList.remove('show');
+});
+document.getElementById('settingTtsRate').addEventListener('input', e=>{
+  document.getElementById('ttsRateVal').textContent = parseFloat(e.target.value).toFixed(1);
+});
+document.getElementById('settingTtsVolume').addEventListener('input', e=>{
+  document.getElementById('ttsVolVal').textContent = Math.round(parseFloat(e.target.value)*100);
+});
+document.getElementById('btnTtsTest').addEventListener('click', ()=>{
+  readSettingsFromUI();
+  speak('Bu bir test mesajıdır. Sistem hazır.', {interrupt:true});
+});
+document.getElementById('btnTtsToggle').addEventListener('click', ()=>{
+  settings.ttsEnabled = !settings.ttsEnabled;
+  saveSettings();
+  updateTtsToggleIcon();
+  if(settings.ttsEnabled){ primeTts(); speak('Sesli bildirim açıldı.', {interrupt:true}); }
+  showToast(settings.ttsEnabled ? 'Sesli bildirim açık' : 'Sesli bildirim kapalı','info');
+});
+document.getElementById('btnUndo').addEventListener('click', undoLastScan);
+
+/* =========================================================
+   PWA MANIFEST INJECTION
+   ========================================================= */
+function generateIconDataUrl(){
+  const canvas = document.createElement('canvas');
+  canvas.width=192; canvas.height=192;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle='#0f172a'; ctx.fillRect(0,0,192,192);
+  ctx.fillStyle='#3b82f6'; ctx.font='bold 90px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText('AB', 96, 100);
+  return canvas.toDataURL('image/png');
+}
+function injectManifest(){
+  try{
+    const icon = generateIconDataUrl();
+    const manifest = {
+      name:"Ambar Barkod & Koli Toplama Sistemi",
+      short_name:"AmbarBarkod",
+      start_url:".", display:"standalone",
+      background_color:"#0f172a", theme_color:"#0f172a",
+      icons:[{src:icon, sizes:"192x192", type:"image/png"}]
+    };
+    const blob = new Blob([JSON.stringify(manifest)], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('link');
+    link.rel='manifest'; link.href=url;
+    document.head.appendChild(link);
+    const favicon = document.createElement('link');
+    favicon.rel='icon'; favicon.href=icon;
+    document.head.appendChild(favicon);
+  }catch(e){ console.warn('Manifest enjekte edilemedi', e); }
+}
+
+/* =========================================================
+   INIT
+   ========================================================= */
+document.addEventListener('DOMContentLoaded', ()=>{
+  loadSettings();
+  loadPersisted();
+  injectManifest();
+  applySettingsToUI();
+  loadVoices();
+  renderAll();
+  if(!('BarcodeDetector' in window)){
+    showToast('Native barkod API yok, fallback motor kullanılacak','warn');
+  }
+});
+</script>
+</body>
+</html>
